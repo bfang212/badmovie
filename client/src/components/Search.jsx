@@ -1,15 +1,43 @@
 import React from 'react';
+import axios from 'axios';
+import Genre from './Genre.jsx';
 
 class Search extends React.Component {
   constructor(props) {
     super(props)
     this.state = {
-      genres: []
+      genres: [],
+      currentGenreId: 0
     }
+
+    this.getGenres=this.getGenres.bind(this);
+    this.changeGenre=this.changeGenre.bind(this);
+    this.getMovies=this.getMovies.bind(this);
   }
+
+  componentDidMount() {
+    this.getGenres();
+  }
+
+  getMovies() {
+    this.props.getMovies(this.state.currentGenreId);
+  }
+
+
   getGenres() {
     //make an axios request in this component to get the list of genres from your endpoint GET GENRES
+    axios.get('/genres')
+    // .then((data) => (data.data.genres.map((item)=>(item.name))))
+    .then((data) => {this.setState({genres : data.data.genres})})
+    .then(() => {this.setState({currentGenreId: this.state.genres[0].id})})
+    .then(() => this.getMovies());
   }
+
+  changeGenre(genreName) {
+    const genreId = this.state.genres.find(genre => genre.name === genreName).id
+    this.setState({currentGenreId: genreId})
+  }
+
   render() {
     return (
       <div className="search">
@@ -24,14 +52,18 @@ class Search extends React.Component {
 
 */}
 
-        <select>
-          <option value="theway">The Way</option>
-          <option value="thisway">This Way</option>
-          <option value="thatway">That Way</option>
+        <select onChange={(e) => this.changeGenre(e.target.value)}>
+          {this.state.genres.map((genre, index) => {
+            return <Genre 
+            key={index} 
+            genre={genre}
+            changeGenre={this.changeGenre}
+            />
+          })}
         </select>
         <br/><br/>
 
-        <button>Search</button>
+        <button onClick={this.getMovies}>Search</button>
 
       </div>)
   }

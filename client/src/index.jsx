@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import $ from 'jquery';
+import axios from 'axios';
 // import AnyComponent from './components/filename.jsx'
 import Search from './components/Search.jsx'
 import Movies from './components/Movies.jsx'
@@ -13,22 +14,58 @@ class App extends React.Component {
       favorites: [{deway: "favorites"}],
       showFaves: false
   	}
-
+    this.getFavorites=this.getFavorites.bind(this)
     this.getMovies = this.getMovies.bind(this)
-    // whats missing?
+    this.saveMovie = this.saveMovie.bind(this)
     this.swapFavorites = this.swapFavorites.bind(this)
+    this.deleteMovie=this.deleteMovie.bind(this)
   }
 
-  getMovies() {
-    //make an axios request to your server on the GET SEARCH endpoint
+  componentDidMount(){
+    this.getFavorites()
   }
 
-  saveMovie() {
+  getMovies(genreId) {
+    axios.get('/search', {
+      params: {
+        genreId: genreId
+      }
+    })
+    .then((data) => {
+      this.setState({movies: data.data.results})
+    })
+  }
+
+  saveMovie({original_title, release_date, overview, vote_average, poster_path}) {
     //same as above but do something diff
+    axios.post('/save', {
+      params: {
+        original_title: original_title,
+        release_date: release_date,
+        overview: overview,
+        vote_average: vote_average,
+        poster_path, poster_path
+      }
+    })
+    .then(() => {this.getFavorites()});
   }
 
-  deleteMovie() {
-    //same as above but do something diff
+  getFavorites() {
+    axios.get('/favorites')
+    .then((data) => {
+      this.setState({favorites: data.data});
+    })
+  }
+
+
+  deleteMovie(original_title) {
+    axios.post('/delete', {
+      params: {
+        original_title: original_title
+      }
+    })
+    .then(()=>{this.getFavorites()})
+
   }
 
   swapFavorites() {
@@ -44,8 +81,8 @@ class App extends React.Component {
       <header className="navbar"><h1>Bad Movies</h1></header> 
       
       <div className="main">
-        <Search swapFavorites={this.swapFavorites} showFaves={this.state.showFaves}/>
-        <Movies movies={this.state.showFaves ? this.state.favorites : this.state.movies} showFaves={this.state.showFaves}/>
+        <Search getMovies={this.getMovies} swapFavorites={this.swapFavorites} showFaves={this.state.showFaves}/>
+        <Movies saveMovie={this.saveMovie} deleteMovie={this.deleteMovie} movies={this.state.showFaves ? this.state.favorites : this.state.movies} showFaves={this.state.showFaves}/>
       </div>
     </div>)
   }
